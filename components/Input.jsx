@@ -4,6 +4,11 @@ import React from "react";
 import colors from "../constans/colors";
 
 const Input = (props) => {
+
+  const onChangeText = text => {
+    props.onInputChange(props.id, text)
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{props.label}</Text>
@@ -15,11 +20,15 @@ const Input = (props) => {
             size={props.iconSize || 20}
           />
         )}
-        <TextInput style={styles.input} />
+        <TextInput 
+          { ...props }
+          style={styles.input} 
+          onChangeText={onChangeText}
+          />
       </View>
       {props.errorText && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{props.errorText}</Text>
+          <Text style={styles.errorText}>{props.errorText[0]}</Text>
         </View>
       )}
     </View>
