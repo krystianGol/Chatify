@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import React, { useCallback, useReducer } from "react";
+import { View, Text, Alert, ActivityIndicator } from "react-native";
+import React, { useCallback, useEffect, useReducer, useState } from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -7,10 +7,19 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Input from "../components/Input";
 import SubmitButton from "../components/SubmitButton";
 import { validateInput } from "../utils/actions/formActions";
-import { reducer } from "../utils/reducers/fromReducer";
+import { reducer } from "../utils/reducers/formReducer";
+import { signUp } from "../utils/actions/authAction";
+import colors from "../constans/colors";
+import { useDispatch, useSelector } from "react-redux";
 
 
 const initialState = {
+  inputValues: {
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+  },
   inputValidities: {
       firstName: false,
       lastName: false,
@@ -21,12 +30,44 @@ const initialState = {
 }
 
 const SignUpForm = () => {
+
+  const dispatch = useDispatch();
+
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
+  const [errorMessage, setErrorMessage] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
   const inputChangedHandler = useCallback((inputId, inputValue) => {
           const result = validateInput(inputId, inputValue);
-          dispatchFormState({ inputId, validationResult: result })
+          dispatchFormState({ inputId, validationResult: result, inputValue })
       }, [dispatchFormState])
+
+  
+  useEffect(() => {
+    if (errorMessage) {
+      Alert.alert('An error occured', errorMessage);
+    }
+  }, [errorMessage])
+
+
+  const authHandler = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      const action = signUp(
+        formState.inputValues.firstName,
+        formState.inputValues.lastName,
+        formState.inputValues.email,
+        formState.inputValues.password,
+      );
+
+      await dispatch(action);
+      setErrorMessage(null);
+    } catch (error) {
+      setIsLoading(false);
+      setErrorMessage(error.message)
+    }
+  }, [dispatch, formState])
 
   return (
     <>
@@ -70,12 +111,19 @@ const SignUpForm = () => {
         errorText={formState.inputValidities['password']}
         onInputChange={inputChangedHandler}
       />
-      <SubmitButton
-        title="Sign Up"
-        onPress={() => console.log("Pressed")}
-        style={{ marginTop: 20 }}
-        disabled={!formState.formIsValid}
-      />
+      { isLoading ? 
+          <ActivityIndicator 
+            size={'small'}
+            color={colors.primaryColor}
+            style={{ marginTop: 15}}
+          />
+          :
+          <SubmitButton
+          title="Sign Up"
+          onPress={authHandler}
+          style={{ marginTop: 20 }}
+          disabled={!formState.formIsValid}
+      />}
     </>
   );
 };
