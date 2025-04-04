@@ -75,7 +75,7 @@ const SignInForm = () => {
         autoCapitalize="none"
         errorText={formState.inputValidities["email"]}
         onInputChange={inputChangedHandler}
-        value={formState.inputValues.email}
+        initialValue={formState.inputValues.email}
       />
       <Input
         id="password"
@@ -87,7 +87,7 @@ const SignInForm = () => {
         iconSize="22"
         errorText={formState.inputValidities["password"]}
         onInputChange={inputChangedHandler}
-        value={formState.inputValues.password}
+        initialValue={formState.inputValues.password}
       />
       {isLoading ? (
         <ActivityIndicator

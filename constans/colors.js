@@ -4,5 +4,6 @@ export default {
     nearlyWhite: '#F4F8F7',
     grey: '#7f8c8d',
     textColor: '#1c1e21',
-    primaryColor: '#77aaff'
+    primaryColor: '#77aaff',
+    red: '#e74c3c',
 }
