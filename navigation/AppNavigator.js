@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { useSelector } from "react-redux";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import MainNavigator from "./MainNavigator";
 import ChatListScreen from "../screens/ChatListScreen";
@@ -14,11 +15,14 @@ const AppNavigator = (props) => {
   const didTryAutoLogin = useSelector(state => state.auth.didTryAutoLogin);
 
   return (
+    
+    //<GestureHandlerRootView>
     <NavigationContainer>
       {isAuth && <MainNavigator />}
       {!isAuth && didTryAutoLogin && <AuthScreen/>}
       {!isAuth && !didTryAutoLogin && <StartUpScreen/>}
     </NavigationContainer>
+    //</GestureHandlerRootView>
   );
 };
 

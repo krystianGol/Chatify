@@ -84,6 +84,7 @@ const SettingsScreen = (props) => {
           userId={userData.userId}
           size={70}
           uri={userData.profilePicture}
+          showEditButton={true}
         />
         </View>
 

@@ -1,13 +1,14 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createStackNavigator } from "@react-navigation/stack";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import ChatListScreen from "../screens/ChatListScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ChatSettingsScreen from "../screens/ChatSettingsScreen";
 import ChatScreen from "../screens/ChatScreen";
+import NewChatScreen from "../screens/NewChatScreen";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
@@ -49,28 +50,39 @@ const TabNavigator = () => {
 const MainNavigator = (props) => {
   return (
     <Stack.Navigator>
+      <Stack.Group>
+        <Stack.Screen
+          name="Home"
+          component={TabNavigator}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatScreen}
+          options={{
+            headerTitle: "",
+            headerBackTitle: "Back",
+          }}
+        />
+        <Stack.Screen
+          name="ChatSettings"
+          component={ChatSettingsScreen}
+          options={{
+            title: "Settings",
+          }}
+        />
+      </Stack.Group>
+
+      <Stack.Group screenOptions={{
+        presentation: 'containedModal'
+      }}>
       <Stack.Screen
-        name="Home"
-        component={TabNavigator}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="ChatScreen"
-        component={ChatScreen}
-        options={{
-          headerTitle: '',
-          headerBackTitle: 'Back'
-        }}
-      />
-      <Stack.Screen
-        name="ChatSettings"
-        component={ChatSettingsScreen}
-        options={{
-          title: "Settings",
-        }}
-      />
+          name="NewChat"
+          component={NewChatScreen}
+        />
+      </Stack.Group>
     </Stack.Navigator>
   );
 };
