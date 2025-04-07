@@ -1,9 +1,10 @@
+import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { Ionicons } from "@expo/vector-icons";
 
-import ChatListScreen from "../screens/ChatListScreen";
-import SettingsScreen from "../screens/SettingsScreen";
 import ChatSettingsScreen from "../screens/ChatSettingsScreen";
+import SettingsScreen from "../screens/SettingsScreen";
+import ChatListScreen from "../screens/ChatListScreen";
 import ChatScreen from "../screens/ChatScreen";
 import NewChatScreen from "../screens/NewChatScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -13,22 +14,18 @@ const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerTitle: "",
-        headerShadowVisible: false,
-      }}
-    >
+    <Tab.Navigator screenOptions={{
+      headerTitle: "",
+      headerShadowVisible: false  
+    }}>
       <Tab.Screen
         name="ChatList"
         component={ChatListScreen}
         options={{
           tabBarLabel: "Chats",
-          tabBarIcon: ({ size, color }) => {
-            return (
-              <Ionicons name="chatbubbles-outline" size={size} color={color} />
-            );
-          },
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubble-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -36,11 +33,9 @@ const TabNavigator = () => {
         component={SettingsScreen}
         options={{
           tabBarLabel: "Settings",
-          tabBarIcon: ({ size, color }) => {
-            return (
-              <Ionicons name="settings-outline" size={size} color={color} />
-            );
-          },
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -54,13 +49,12 @@ const MainNavigator = (props) => {
         <Stack.Screen
           name="Home"
           component={TabNavigator}
-          options={{
-            headerShown: false,
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ChatScreen"
           component={ChatScreen}
+          //initialParams={{ selectedUserId: null }}
           options={{
             headerTitle: "",
             headerBackTitle: "Back",
@@ -70,15 +64,14 @@ const MainNavigator = (props) => {
           name="ChatSettings"
           component={ChatSettingsScreen}
           options={{
-            title: "Settings",
+            headerTitle: "Settings",
+            headerBackTitle: "Back",
           }}
         />
       </Stack.Group>
 
-      <Stack.Group screenOptions={{
-        presentation: 'containedModal'
-      }}>
-      <Stack.Screen
+      <Stack.Group screenOptions={{ presentation: 'containedModal' }}>
+        <Stack.Screen
           name="NewChat"
           component={NewChatScreen}
         />

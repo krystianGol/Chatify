@@ -6,25 +6,66 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
+import { useSelector } from "react-redux";
 
 import colors from "../constans/colors";
+import Bubble from "../components/Bubble";
+import PageContainer from "../components/PageContainer";
+import { creatChat } from "../utils/actions/chatActions";
 
 const ChatScreen = (props) => {
+  const storedUsers = useSelector((state) => state.users.storedUsers);
+  const userData = useSelector((state) => state.auth.userData);
+  const chatData = props.route?.params?.newChatData;
+
+  const [chatId, setChatId] = useState(props.route?.params?.chatId);
+  const [chatUsers, setChatUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
-  const sendMessage = useCallback(() => {
+
+  const sendMessage = useCallback( async () => {
+    try {
+      let id = chatId;
+
+      if (!id) {
+        id = await creatChat(userData.userId, props.route.params.newChatData);
+        setChatId(id);
+      }
+    } catch (error) {
+      console.log(error);
+    }
     setMessageText("");
-  }, [messageText]);
+  }, [messageText, chatId]);
+
+  const setTitle = () => {
+    const otherUserId = chatUsers.find((uid) => uid !== userData.userId);
+    const otherUserData = storedUsers[otherUserId];
+
+    return (
+      otherUserData && `${otherUserData.firstName} ${otherUserData.lastName}`
+    );
+  };
+
+  useEffect(() => {
+    props.navigation.setOptions({
+      headerTitle: setTitle(),
+    });
+
+    setChatUsers(chatData.users);
+  }, [chatUsers]);
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.screen}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={100}
       >
+        <PageContainer>
+          {!chatId && <Bubble text="This is new chat say Hi !" type="system" />}
+        </PageContainer>
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.mediaButton}>
             <Feather name="plus" size={24} color={colors.blue} />
@@ -66,7 +107,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     height: 50,
-    marginTop: 'auto',
+    marginTop: "auto",
   },
   textBox: {
     flex: 1,
@@ -86,8 +127,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   screen: {
-    flex: 1
-  }
+    flex: 1,
+  },
 });
 
 export default ChatScreen;

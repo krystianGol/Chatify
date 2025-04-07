@@ -5,21 +5,27 @@ import {
   Button,
   TextInput,
   ActivityIndicator,
-  FlatList
+  FlatList,
 } from "react-native";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { CommonActions } from "@react-navigation/native";
+
 
 import CustomHeaderButton from "../components/CustomHeaderButton";
 import PageContainer from "../components/PageContainer";
 import colors from "../constans/colors";
 import { searchUsers } from "../utils/actions/userActions";
 import DataItem from "../components/DataItem";
-
+import { useSelector, useDispatch } from "react-redux";
+import {setStoredUsers} from "../store/userSlice"
 
 const NewChatScreen = (props) => {
+  const userData = useSelector((state) => state.auth.userData);
+  const dispatch = useDispatch();
+
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState();
   const [noResultsFound, setNoResultsFound] = useState(false);
@@ -46,14 +52,16 @@ const NewChatScreen = (props) => {
         return;
       }
       setIsLoading(true);
+
       const usersResult = await searchUsers(searchTerm);
+      delete usersResult[userData.userId];
       setUsers(usersResult);
-      console.log(Object.keys(usersResult));
 
       if (Object.keys(usersResult).length === 0) {
         setNoResultsFound(true);
       } else {
         setNoResultsFound(false);
+        dispatch(setStoredUsers({ newUsers: usersResult }))
       }
 
       setIsLoading(false);
@@ -61,6 +69,27 @@ const NewChatScreen = (props) => {
 
     return () => clearTimeout(delaySearch);
   }, [searchTerm]);
+
+  const userPressed = (userId) => {
+    props.navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: "Home",
+            state: {
+              routes: [
+                {
+                  name: "ChatList",
+                  params: { selectedUserId: userId },
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );   
+  };
 
   return (
     <PageContainer>
@@ -83,22 +112,24 @@ const NewChatScreen = (props) => {
         </View>
       )}
 
-      { !isLoading && !noResultsFound && users &&
+      {!isLoading && !noResultsFound && users && (
         <FlatList
           data={Object.keys(users)}
-
           renderItem={(itemData) => {
             const userId = itemData.item;
             const userData = users[userId];
 
-            return <DataItem 
-              title={`${userData.firstName} ${userData.lastName}`}
-              subtitle={userData.about}
-              image={userData.profilePicture}
-            />
+            return (
+              <DataItem
+                title={`${userData.firstName} ${userData.lastName}`}
+                subtitle={userData.about}
+                image={userData.profilePicture}
+                onPress={() => userPressed(userId)}
+              />
+            );
           }}
         />
-      }s
+      )}
 
       {!isLoading && !users && (
         <View style={styles.messageToUserContainer}>
