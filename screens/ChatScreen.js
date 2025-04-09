@@ -19,11 +19,13 @@ import { creatChat } from "../utils/actions/chatActions";
 const ChatScreen = (props) => {
   const storedUsers = useSelector((state) => state.users.storedUsers);
   const userData = useSelector((state) => state.auth.userData);
-  const chatData = props.route?.params?.newChatData;
+  const storedChats = useSelector(state => state.chats.chatsData);
 
   const [chatId, setChatId] = useState(props.route?.params?.chatId);
   const [chatUsers, setChatUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
+
+  const chatData = (chatId && storedChats[chatId]) || props.route?.params?.newChatData;
 
   const sendMessage = useCallback( async () => {
     try {
