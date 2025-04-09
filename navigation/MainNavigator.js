@@ -18,11 +18,13 @@ import {
   onValue,
   query,
   ref,
+  set,
 } from "firebase/database";
 import { setChatsData } from "../store/chatSlice";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import colors from "../constans/colors";
 import { setStoredUsers } from "../store/userSlice";
+import { setChatMessages } from "../store/messagesSlice";
 
 
 const Stack = createNativeStackNavigator();
@@ -149,6 +151,15 @@ const MainNavigator = (props) => {
             setIsLoading(false);
           }
         });
+
+        const messagesRef = child(db, `messages/${chatId}`);
+        refs.push(messagesRef);
+
+        onValue(messagesRef, (messagesSnapshot) => {
+          const messagesData = messagesSnapshot.val();
+          dispatch(setChatMessages({ chatId, messagesData }));
+        })
+
         if (chatsCounter == 0) setIsLoading(false);
       }
     });

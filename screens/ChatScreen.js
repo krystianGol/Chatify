@@ -14,16 +14,19 @@ import { useSelector } from "react-redux";
 import colors from "../constans/colors";
 import Bubble from "../components/Bubble";
 import PageContainer from "../components/PageContainer";
-import { creatChat } from "../utils/actions/chatActions";
+import { creatChat, sendTextMessage } from "../utils/actions/chatActions";
 
 const ChatScreen = (props) => {
   const storedUsers = useSelector((state) => state.users.storedUsers);
   const userData = useSelector((state) => state.auth.userData);
   const storedChats = useSelector(state => state.chats.chatsData);
+  const chatMessages = useSelector(state => state.messages.messagesData);
+
 
   const [chatId, setChatId] = useState(props.route?.params?.chatId);
   const [chatUsers, setChatUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const chatData = (chatId && storedChats[chatId]) || props.route?.params?.newChatData;
 
@@ -35,10 +38,17 @@ const ChatScreen = (props) => {
         id = await creatChat(userData.userId, props.route.params.newChatData);
         setChatId(id);
       }
+
+      await sendTextMessage(chatId, userData.userId, messageText);
+      setMessageText("");
+
     } catch (error) {
+      setErrorMessage("Something went wrong")
+      setTimeout(() => {
+        setErrorMessage("")
+      }, 4000);
       console.log(error);
     }
-    setMessageText("");
   }, [messageText, chatId]);
 
   const setTitle = () => {
@@ -67,6 +77,9 @@ const ChatScreen = (props) => {
       >
         <PageContainer>
           {!chatId && <Bubble text="This is new chat say Hi !" type="system" />}
+          {
+            errorMessage !== "" && <Bubble text={errorMessage} type="error" />
+          }
         </PageContainer>
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.mediaButton}>

@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import DataItem from "../components/DataItem";
 import PageContainer from "../components/PageContainer";
+import PageTitle from "../components/PageTitle";
 
 const ChatListScreen = (props) => {
   const userData = useSelector((state) => state.auth.userData);
@@ -53,6 +54,7 @@ const ChatListScreen = (props) => {
 
   return (
     <PageContainer>
+      <PageTitle title="Chats" />
       <FlatList
         data={userChats}
         renderItem={(itemData) => {
@@ -69,7 +71,7 @@ const ChatListScreen = (props) => {
           return (
             <DataItem
               title={`${otherUser.firstName} ${otherUser.lastName}`}
-              subtitle="Here will be a message ..."
+              subtitle={chatData.latestMessageText || "New chat"}
               image={otherUser.profilePicture}
               onPress={() => props.navigation.navigate("ChatScreen", { chatId })}
             />
