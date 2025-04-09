@@ -1,18 +1,58 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
 import colors from "../constans/colors";
+import uuid from 'react-native-uuid'
+import * as Clipboard from 'expo-clipboard';
+import { Feather, FontAwesome } from '@expo/vector-icons';
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
+
+function formatAmPm(dateString) {
+  const date = new Date(dateString);
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  var ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  minutes = minutes < 10 ? '0'+minutes : minutes;
+  return hours + ':' + minutes + ' ' + ampm;
+}
+
+const MenuItem = props => {
+
+  const Icon = props.iconPack ?? Feather;
+
+  return <MenuOption onSelect={props.onSelect}>
+      <View style={styles.menuItemContainer}>
+          <Text style={styles.menuText}>{props.text}</Text>
+          <Icon name={props.icon} size={18} />
+      </View>
+  </MenuOption>
+}
 
 const Bubble = (props) => {
-  const { title, type } = props;
+  const [copiedText, setCopiedText] = useState('');
+
+  const { text, type, date } = props;
 
   const bubbleStyle = { ...styles.container };
-  const textStyle = { ...styles.title };
+  const textStyle = { ...styles.text };
   const wrapperStyle = { ...styles.wrapperStyle };
+
+  const menuRef = useRef(null);
+  const id = useRef(uuid.v4());
+  const dateString = formatAmPm(date);
+  
+  let Container = View;
 
   switch (type) {
     case "system":
       textStyle.color = "#65644A";
-      bubbleStyle.backgroundColor = colors.beige;
+      bubbleStyle.backgroundColor = colors.beigne;
       bubbleStyle.alignItems = "center";
       bubbleStyle.marginTop = 10;
       break;
@@ -25,21 +65,44 @@ const Bubble = (props) => {
       wrapperStyle.justifyContent = "flex-end";
       bubbleStyle.backgroundColor = "#E7FED6";
       bubbleStyle.marginTop = 5;
+      Container = TouchableWithoutFeedback;
       break;
     case "theirMessage":
       wrapperStyle.justifyContent = "flex-start";
       bubbleStyle.maxWidth = "90%";
       bubbleStyle.marginTop = 3;
+      Container = TouchableWithoutFeedback;
       break;
     default:
       break;
   }
 
+  const copyToClipboard = async (text) => {
+    await Clipboard.setStringAsync(text);
+  };
+
   return (
     <View style={wrapperStyle}>
-      <View style={bubbleStyle}>
-        <Text style={textStyle}>{title}</Text>
-      </View>
+      <Container
+        onLongPress={() => menuRef.current.props.ctx.menuActions.openMenu(id.current)}
+        style={{ width: "100%" }}
+      >
+        <View style={bubbleStyle}>
+          <Text style={textStyle}>{text}</Text>
+          {
+                    dateString && 
+                    <View style={styles.timeContainer}>
+                        <Text style={styles.time}>{dateString}</Text>
+                    </View>
+                }
+          <Menu name={id.current} ref={menuRef}>
+            <MenuTrigger />
+            <MenuOptions>
+            <MenuItem text='Copy to clipboard' icon={'copy'} onSelect={() => copyToClipboard(text)} />
+            </MenuOptions>
+          </Menu>
+        </View>
+      </Container>
     </View>
   );
 };
@@ -61,6 +124,26 @@ const styles = StyleSheet.create({
     fontFamily: "regular",
     letterSpacing: 0.3,
   },
+  menuItemContainer: {
+    flexDirection: 'row',
+    padding: 5
+},
+menuText: {
+    flex: 1,
+    fontFamily: 'regular',
+    letterSpacing: 0.3,
+    fontSize: 16
+},
+timeContainer: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end'
+},
+time: {
+  fontFamily: 'regular',
+  letterSpacing: 0.3,
+  color: colors.grey,
+  fontSize: 12
+}
 });
 
 export default Bubble;

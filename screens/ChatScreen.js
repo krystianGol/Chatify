@@ -106,8 +106,9 @@ const ChatScreen = (props) => {
                 const isOwnMessage = message.sentBy === userData.userId;
                 const messageType = isOwnMessage ? "myMessage" : "theirMessage";
                 return <Bubble 
-                  title={message.text}
+                  text={message.text}
                   type={messageType}
+                  date={message.sentAt}
                 />
               }}
             />
