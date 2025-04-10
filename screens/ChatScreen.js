@@ -17,16 +17,19 @@ import colors from "../constans/colors";
 import Bubble from "../components/Bubble";
 import PageContainer from "../components/PageContainer";
 import { creatChat, sendTextMessage } from "../utils/actions/chatActions";
+import ReplayTo from "../components/ReplayTo";
 
 const ChatScreen = (props) => {
   const [chatId, setChatId] = useState(props.route?.params?.chatId);
   const [chatUsers, setChatUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [replayingTo, setReplayingTo] = useState();
 
   const storedUsers = useSelector((state) => state.users.storedUsers);
   const userData = useSelector((state) => state.auth.userData);
   const storedChats = useSelector((state) => state.chats.chatsData);
+
   const chatMessages = useSelector((state) => {
     if (!chatId) return [];
 
@@ -59,8 +62,9 @@ const ChatScreen = (props) => {
         setChatId(id);
       }
 
-      await sendTextMessage(chatId, userData.userId, messageText);
+      await sendTextMessage(chatId, userData.userId, messageText, replayingTo && replayingTo.key);
       setMessageText("");
+      setReplayingTo();
     } catch (error) {
       setErrorMessage("Something went wrong");
       setTimeout(() => {
@@ -105,15 +109,26 @@ const ChatScreen = (props) => {
                 const message = itemData.item;
                 const isOwnMessage = message.sentBy === userData.userId;
                 const messageType = isOwnMessage ? "myMessage" : "theirMessage";
+
                 return <Bubble 
-                  text={message.text}
                   type={messageType}
+                  text={message.text}
                   date={message.sentAt}
+                  setReplay={() => setReplayingTo(message)}
+                  replayingTo={message.replayTo && chatMessages.find(i => i.key === message.replayTo)}
                 />
               }}
             />
           }
         </PageContainer>
+        {
+          replayingTo && 
+            <ReplayTo
+              text={replayingTo.text}
+              user={storedUsers[replayingTo.sentBy]}
+              onCancel={() => setReplayingTo()}
+            />
+        }
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.mediaButton}>
             <Feather name="plus" size={24} color={colors.blue} />

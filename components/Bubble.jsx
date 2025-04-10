@@ -1,43 +1,45 @@
 import React, { useRef, useState } from "react";
 import { StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
 import colors from "../constans/colors";
-import uuid from 'react-native-uuid'
-import * as Clipboard from 'expo-clipboard';
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import uuid from "react-native-uuid";
+import * as Clipboard from "expo-clipboard";
+import { Feather, FontAwesome, Entypo } from "@expo/vector-icons";
 import {
   Menu,
   MenuOptions,
   MenuOption,
   MenuTrigger,
 } from "react-native-popup-menu";
+import { useSelector } from "react-redux";
 
 function formatAmPm(dateString) {
   const date = new Date(dateString);
   var hours = date.getHours();
   var minutes = date.getMinutes();
-  var ampm = hours >= 12 ? 'pm' : 'am';
+  var ampm = hours >= 12 ? "pm" : "am";
   hours = hours % 12;
   hours = hours ? hours : 12;
-  minutes = minutes < 10 ? '0'+minutes : minutes;
-  return hours + ':' + minutes + ' ' + ampm;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  return hours + ":" + minutes + " " + ampm;
 }
 
-const MenuItem = props => {
-
+const MenuItem = (props) => {
   const Icon = props.iconPack ?? Feather;
 
-  return <MenuOption onSelect={props.onSelect}>
+  return (
+    <MenuOption onSelect={props.onSelect}>
       <View style={styles.menuItemContainer}>
-          <Text style={styles.menuText}>{props.text}</Text>
-          <Icon name={props.icon} size={18} />
+        <Text style={styles.menuText}>{props.text}</Text>
+        <Icon name={props.icon} size={18} />
       </View>
-  </MenuOption>
-}
+    </MenuOption>
+  );
+};
 
 const Bubble = (props) => {
-  const [copiedText, setCopiedText] = useState('');
+  const storedUsers = useSelector((state) => state.users.storedUsers);
 
-  const { text, type, date } = props;
+  const { text, type, date, replayingTo } = props;
 
   const bubbleStyle = { ...styles.container };
   const textStyle = { ...styles.text };
@@ -45,8 +47,8 @@ const Bubble = (props) => {
 
   const menuRef = useRef(null);
   const id = useRef(uuid.v4());
-  const dateString = formatAmPm(date);
-  
+  const dateString = date && formatAmPm(date);
+
   let Container = View;
 
   switch (type) {
@@ -73,6 +75,9 @@ const Bubble = (props) => {
       bubbleStyle.marginTop = 3;
       Container = TouchableWithoutFeedback;
       break;
+    case "reply":
+      bubbleStyle.backgroundColor = "#F2F2F2";
+      break;
     default:
       break;
   }
@@ -81,24 +86,44 @@ const Bubble = (props) => {
     await Clipboard.setStringAsync(text);
   };
 
+  const replayingToUser = replayingTo && storedUsers[replayingTo.sentBy];
+
   return (
     <View style={wrapperStyle}>
       <Container
-        onLongPress={() => menuRef.current.props.ctx.menuActions.openMenu(id.current)}
+        onLongPress={() =>
+          menuRef.current.props.ctx.menuActions.openMenu(id.current)
+        }
         style={{ width: "100%" }}
       >
         <View style={bubbleStyle}>
+          {replayingTo && (
+            <Bubble
+              type="replay"
+              text={replayingTo.text}
+              name={`${replayingToUser.firstName} ${replayingToUser.lastName}`}
+            />
+          )}
           <Text style={textStyle}>{text}</Text>
-          {
-                    dateString && 
-                    <View style={styles.timeContainer}>
-                        <Text style={styles.time}>{dateString}</Text>
-                    </View>
-                }
+          {dateString && (
+            <View style={styles.timeContainer}>
+              <Text style={styles.time}>{dateString}</Text>
+            </View>
+          )}
           <Menu name={id.current} ref={menuRef}>
             <MenuTrigger />
             <MenuOptions>
-            <MenuItem text='Copy to clipboard' icon={'copy'} onSelect={() => copyToClipboard(text)} />
+              <MenuItem
+                text="Copy to clipboard"
+                icon={"copy"}
+                onSelect={() => copyToClipboard(text)}
+              />
+              <MenuItem
+                text="Replay"
+                iconPack={Entypo}
+                icon={"arrow-with-circle-left"}
+                onSelect={props.setReplay}
+              />
             </MenuOptions>
           </Menu>
         </View>
@@ -125,25 +150,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   menuItemContainer: {
-    flexDirection: 'row',
-    padding: 5
-},
-menuText: {
+    flexDirection: "row",
+    padding: 5,
+  },
+  menuText: {
     flex: 1,
-    fontFamily: 'regular',
+    fontFamily: "regular",
     letterSpacing: 0.3,
-    fontSize: 16
-},
-timeContainer: {
-  flexDirection: 'row',
-  justifyContent: 'flex-end'
-},
-time: {
-  fontFamily: 'regular',
-  letterSpacing: 0.3,
-  color: colors.grey,
-  fontSize: 12
-}
+    fontSize: 16,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  time: {
+    fontFamily: "regular",
+    letterSpacing: 0.3,
+    color: colors.grey,
+    fontSize: 12,
+  },
 });
 
 export default Bubble;
