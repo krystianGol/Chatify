@@ -6,18 +6,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   FlatList,
-  Text
+  Text,
+  Image,
+  ActivityIndicator
 } from "react-native";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
 import { useSelector } from "react-redux";
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 import colors from "../constans/colors";
 import Bubble from "../components/Bubble";
 import PageContainer from "../components/PageContainer";
-import { creatChat, sendTextMessage } from "../utils/actions/chatActions";
+import { creatChat, sendImage, sendTextMessage } from "../utils/actions/chatActions";
 import ReplayTo from "../components/ReplayTo";
+import { lunchImagePicker, openCamera, uploadImageAsync } from "../utils/imageHelper";
 
 const ChatScreen = (props) => {
   const [chatId, setChatId] = useState(props.route?.params?.chatId);
@@ -25,10 +29,14 @@ const ChatScreen = (props) => {
   const [messageText, setMessageText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [replayingTo, setReplayingTo] = useState();
+  const [tempImageUri, setTempImageUri] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const storedUsers = useSelector((state) => state.users.storedUsers);
   const userData = useSelector((state) => state.auth.userData);
   const storedChats = useSelector((state) => state.chats.chatsData);
+
+  const flatList = useRef();
 
   const chatMessages = useSelector((state) => {
     if (!chatId) return [];
@@ -64,7 +72,7 @@ const ChatScreen = (props) => {
 
       await sendTextMessage(chatId, userData.userId, messageText, replayingTo && replayingTo.key);
       setMessageText("");
-      setReplayingTo();
+      setReplayingTo(null);
     } catch (error) {
       setErrorMessage("Something went wrong");
       setTimeout(() => {
@@ -91,6 +99,55 @@ const ChatScreen = (props) => {
     setChatUsers(chatData.users);
   }, [chatUsers]);
 
+  const pickImage = useCallback(async () => {
+    try {
+      const tempUri = await lunchImagePicker();
+      if (!tempUri) return;
+
+      setTempImageUri(tempUri);
+
+    } catch (error) {
+      console.log(error)
+    }
+
+  }, [tempImageUri])
+
+  const uploadImage = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      let id = chatId;
+
+      if (!id) {
+        id = await creatChat(userData.userId, props.route.params.newChatData);
+        setChatId(id);
+      }
+
+      const uploadUrl = await uploadImageAsync(tempImageUri, true);
+      setIsLoading(false);
+
+      await sendImage(id, userData.userId, uploadUrl, replayingTo && replayingTo.key);
+
+      setReplayingTo(null);
+      setTimeout(() => setTempImageUri(""), 500);
+    } catch (error) {
+      console.log(error);
+    }
+  }, [isLoading, tempImageUri, chatId])
+
+  const takePhoto = useCallback(async () => {
+    try {
+      const tempUri = await openCamera();
+      if (!tempUri) return;
+
+      setTempImageUri(tempUri);
+
+    } catch (error) {
+      console.log(error)
+    }
+
+  }, [tempImageUri])
+
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <KeyboardAvoidingView
@@ -104,6 +161,9 @@ const ChatScreen = (props) => {
           {
             chatId && 
             <FlatList 
+              ref={ref => flatList.current = ref}
+              onContentSizeChange={() => flatList.current.scrollToEnd({ animated: false })}
+              onLayout={() => flatList.current.scrollToEnd({ animated: false })}
               data={chatMessages}
               renderItem={(itemData) => {
                 const message = itemData.item;
@@ -116,6 +176,7 @@ const ChatScreen = (props) => {
                   date={message.sentAt}
                   setReplay={() => setReplayingTo(message)}
                   replayingTo={message.replayTo && chatMessages.find(i => i.key === message.replayTo)}
+                  imageUrl={message.imageUrl}
                 />
               }}
             />
@@ -130,7 +191,10 @@ const ChatScreen = (props) => {
             />
         }
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.mediaButton}>
+          <TouchableOpacity 
+            style={styles.mediaButton}
+            onPress={pickImage}
+            >
             <Feather name="plus" size={24} color={colors.blue} />
           </TouchableOpacity>
 
@@ -142,7 +206,7 @@ const ChatScreen = (props) => {
           />
 
           {messageText === "" && (
-            <TouchableOpacity style={styles.mediaButton}>
+            <TouchableOpacity style={styles.mediaButton} onPress={takePhoto}>
               <Feather name="camera" size={24} color={colors.blue} />
             </TouchableOpacity>
           )}
@@ -155,6 +219,37 @@ const ChatScreen = (props) => {
               <Feather name="send" size={20} color="white" />
             </TouchableOpacity>
           )}
+          <AwesomeAlert 
+            show={tempImageUri !== ""}
+            title="Send image ?"
+            closeOnTouchOutside={true}
+            closeOnHardwareBackPress={false}
+            showCancelButton={true}
+            showConfirmButton={true}
+            cancelText="Cancel"
+            confirmText="Send"
+            confirmButtonColor={colors.primaryColor}
+            cancelButtonColor={colors.red}
+            titleStyle={styles.popupTitleStyle}
+            onCancelPressed={() => setTempImageUri("")}
+            onConfirmPressed={uploadImage}
+            onDismiss={() => setTempImageUri("")}
+            customView={(
+              <View>
+                {
+                  isLoading &&
+                  <ActivityIndicator 
+                    size={'small'}
+                    colors={colors.primaryColor}
+                  />
+                }
+                {
+                  !isLoading && tempImageUri !== "" &&
+                  <Image source={{ uri: tempImageUri }} style={{ width: 200, height: 200 }}/>
+                }
+              </View>
+            )}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -192,6 +287,11 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
+  popupTitleStyle: {
+    fontFamily: 'medium',
+    letterSpacing: 0.3,
+    color: colors.textColor
+  }
 });
 
 export default ChatScreen;

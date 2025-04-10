@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { StyleSheet, Text, TouchableWithoutFeedback, View, Image } from "react-native";
 import colors from "../constans/colors";
 import uuid from "react-native-uuid";
 import * as Clipboard from "expo-clipboard";
@@ -39,7 +39,7 @@ const MenuItem = (props) => {
 const Bubble = (props) => {
   const storedUsers = useSelector((state) => state.users.storedUsers);
 
-  const { text, type, date, replayingTo } = props;
+  const { text, type, date, replayingTo, imageUrl } = props;
 
   const bubbleStyle = { ...styles.container };
   const textStyle = { ...styles.text };
@@ -104,7 +104,14 @@ const Bubble = (props) => {
               name={`${replayingToUser.firstName} ${replayingToUser.lastName}`}
             />
           )}
-          <Text style={textStyle}>{text}</Text>
+         { !imageUrl && <Text style={textStyle}>{text}</Text> }
+          {
+            imageUrl && 
+              <Image 
+                source={{ uri: imageUrl }}
+                style={styles.image}
+              />
+          }
           {dateString && (
             <View style={styles.timeContainer}>
               <Text style={styles.time}>{dateString}</Text>
@@ -169,6 +176,11 @@ const styles = StyleSheet.create({
     color: colors.grey,
     fontSize: 12,
   },
+  image: {
+    width: 300,
+    height: 300,
+    marginBottom: 5
+  }
 });
 
 export default Bubble;
