@@ -65,7 +65,7 @@ const Bubble = (props) => {
       break;
     case "myMessage":
       wrapperStyle.justifyContent = "flex-end";
-      bubbleStyle.backgroundColor = "#E7FED6";
+      bubbleStyle.backgroundColor = colors.primaryColor;
       bubbleStyle.marginTop = 5;
       Container = TouchableWithoutFeedback;
       break;

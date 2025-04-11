@@ -6,7 +6,7 @@ import uuid from 'react-native-uuid';
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
 
 export const lunchImagePicker = async () => {
-  await checkMediaPermission();
+  //await checkMediaPermission();
 
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
